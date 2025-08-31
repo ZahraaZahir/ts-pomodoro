@@ -1,0 +1,70 @@
+body {
+    background-color: #1d2129;
+    color: #e1e3e6;
+    font-family: 'Roboto Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.timer-container {
+    text-align: center;
+    background-color: #282c34;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    min-width: 500px; /* Added for better layout */
+}
+
+.modes {
+    margin-bottom: 20px;
+}
+
+.mode-button {
+    font-family: sans-serif;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    color: #6a7180;
+    padding: 5px 15px;
+    margin: 0 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-button.active {
+    color: #e1e3e6;
+    background-color: #3a3f4b;
+    font-weight: bold;
+}
+
+#time-display {
+    font-size: 7rem;
+    font-weight: 500;
+    margin-bottom: 30px;
+}
+
+.controls button {
+    font-family: sans-serif;
+    font-size: 1.2rem;
+    color: #e1e3e6;
+    background-color: #3a3f4b;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 25px;
+    margin: 0 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.controls button:hover {
+    background-color: #4b5160;
+}
+
+/* --- A simple utility class to hide elements --- */
+.hidden {
+    display: none;
+}
