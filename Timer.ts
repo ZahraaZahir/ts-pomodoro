@@ -5,9 +5,10 @@ export class Timer {
   private currentState: TimerStates;
   private timerId: number | null;
   private timeRemaining: number;
-  public onTick: (time: number) => void;
-
   private settings: TimerSettings;
+
+  public onTick: (time: number) => void;
+  public onFinish: () => void;
 
   constructor(settings: TimerSettings) {
     this.settings = settings;
@@ -15,6 +16,7 @@ export class Timer {
     this.timerId = null;
     this.timeRemaining = this.settings.pomodoro * 60;
     this.onTick = () => {};
+    this.onFinish = () => {};
   }
 
   public start(): void {
@@ -25,6 +27,10 @@ export class Timer {
     this.timerId = window.setInterval(() => {
       this.timeRemaining--;
       this.onTick(this.timeRemaining);
+      if(this.timeRemaining <= 0){
+        this.pause();
+        this.onFinish();
+      }
     }, 1000);
   }
 
@@ -63,4 +69,3 @@ export class Timer {
     this.onTick(this.timeRemaining);
   }
 }
-

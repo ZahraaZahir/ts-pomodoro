@@ -685,8 +685,11 @@ myTimer.onTick = (time)=>{
     const seconds = time % 60;
     timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
-// pauseBtn.classList.add('hidden');
-// startBtn.classList.remove('hidden');
+myTimer.onFinish = ()=>{
+    alert('Session finished!');
+    pauseBtn.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+};
 startBtn.addEventListener('click', ()=>{
     myTimer.start();
 });
@@ -726,6 +729,7 @@ class Timer {
         this.timerId = null;
         this.timeRemaining = this.settings.pomodoro * 60;
         this.onTick = ()=>{};
+        this.onFinish = ()=>{};
     }
     start() {
         if (this.timerId !== null) return;
@@ -733,6 +737,10 @@ class Timer {
         this.timerId = window.setInterval(()=>{
             this.timeRemaining--;
             this.onTick(this.timeRemaining);
+            if (this.timeRemaining <= 0) {
+                this.pause();
+                this.onFinish();
+            }
         }, 1000);
     }
     pause() {

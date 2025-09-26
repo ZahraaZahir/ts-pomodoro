@@ -25,6 +25,12 @@ myTimer.onTick = (time: number) => {
     .padStart(2, '0')}`;
 };
 
+myTimer.onFinish = () => {
+  alert('Session finished!');
+  pauseBtn.classList.add('hidden');
+  startBtn.classList.remove('hidden');
+};
+
 startBtn.addEventListener('click', () => {
   myTimer.start();
 });
