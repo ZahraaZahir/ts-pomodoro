@@ -1,33 +1,49 @@
-import {TimerSettings} from './TimerSettings';
-import {TimerStates} from './TimerStates';
+import { TimerSettings } from "./TimerSettings";
+import { TimerMode } from "./TimerMode";
+import { TimerStatus } from "./TimerStatus";
 
 export class Timer {
-  private currentState: TimerStates;
-  private timerId: number | null;
-  private timeRemaining: number;
-  private settings: TimerSettings;
-
   public onTick: (time: number) => void;
   public onFinish: () => void;
 
+  private settings: TimerSettings;
+  private mode: TimerMode;
+  private status: TimerStatus;
+  private timeRemaining: number;
+  private timerId: number | null;
+  private durationMap: Map<TimerMode, number>;
+
   constructor(settings: TimerSettings) {
     this.settings = settings;
-    this.currentState = TimerStates.Stopped;
+    this.mode = TimerMode.Pomodoro;
+    this.status = TimerStatus.Stopped;
     this.timerId = null;
-    this.timeRemaining = this.settings.pomodoro * 60;
+
     this.onTick = () => {};
     this.onFinish = () => {};
+
+    this.durationMap = new Map<TimerMode, number>([
+      [TimerMode.Pomodoro, this.settings.pomodoro],
+      [TimerMode.ShortBreak, this.settings.shortBreak],
+      [TimerMode.LongBreak, this.settings.longBreak],
+    ]);
+
+    // Set the initial time based on the default mode
+    this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
   }
 
+  // --- Control Methods ---
+
   public start(): void {
-    if (this.timerId !== null) {
+    if (this.status === TimerStatus.Running) {
       return;
     }
-    this.currentState = TimerStates.Running;
+    this.status = TimerStatus.Running;
     this.timerId = window.setInterval(() => {
       this.timeRemaining--;
       this.onTick(this.timeRemaining);
-      if(this.timeRemaining <= 0){
+
+      if (this.timeRemaining <= 0) {
         this.pause();
         this.onFinish();
       }
@@ -36,36 +52,42 @@ export class Timer {
 
   public pause(): void {
     if (this.timerId !== null) {
-      /* here, we have created a type guard for this
-      clear interval function as it was complaining
-      that the type didn't match
-      (because what if the timerId was null?)
-      so we fixed that by wrapping it with a safe gaurd!)
-      */
       clearInterval(this.timerId);
-      this.currentState = TimerStates.Paused;
       this.timerId = null;
     }
+    this.status = TimerStatus.Paused;
   }
 
   public reset(): void {
     this.pause();
-    this.currentState = TimerStates.Stopped;
-    this.timeRemaining = this.settings.pomodoro * 60;
+    this.status = TimerStatus.Stopped;
+    const durationInMinutes = this.durationMap.get(this.mode) ?? 0;
+    this.timeRemaining = durationInMinutes * 60;
+    this.onTick(this.timeRemaining);
+  }
+
+
+  public startPomodoro(): void {
+    this.pause();
+    this.mode = TimerMode.Pomodoro;
+    this.status = TimerStatus.Stopped;
+    this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
     this.onTick(this.timeRemaining);
   }
 
   public startShortBreak(): void {
     this.pause();
-    this.currentState = TimerStates.Break;
-    this.timeRemaining = this.settings.shortBreak * 60;
+    this.mode = TimerMode.ShortBreak;
+    this.status = TimerStatus.Stopped;
+    this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
     this.onTick(this.timeRemaining);
   }
 
   public startLongBreak(): void {
     this.pause();
-    this.currentState = TimerStates.Break;
-    this.timeRemaining = this.settings.longBreak * 60;
+    this.mode = TimerMode.LongBreak;
+    this.status = TimerStatus.Stopped;
+    this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
     this.onTick(this.timeRemaining);
   }
 }

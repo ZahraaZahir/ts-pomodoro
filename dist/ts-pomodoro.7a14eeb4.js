@@ -668,13 +668,14 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 
 },{}],"1QViH":[function(require,module,exports,__globalThis) {
 var _timer = require("./Timer");
-const timeDisplay = document.getElementById('time-display');
-const startBtn = document.getElementById('start-btn');
-const pauseBtn = document.getElementById('pause-btn');
-const resetBtn = document.getElementById('reset-btn');
-const pomodoroBtn = document.getElementById('pomodoro-btn');
-const shortBreakBtn = document.getElementById('short-break-btn');
-const longBreakBtn = document.getElementById('long-break-btn');
+const timeDisplay = document.getElementById("time-display");
+const startBtn = document.getElementById("start-btn");
+const pauseBtn = document.getElementById("pause-btn");
+const resetBtn = document.getElementById("reset-btn");
+const pomodoroBtn = document.getElementById("pomodoro-btn");
+const shortBreakBtn = document.getElementById("short-break-btn");
+const longBreakBtn = document.getElementById("long-break-btn");
+const modeButtons = document.querySelectorAll('.mode-button');
 const myTimer = new (0, _timer.Timer)({
     pomodoro: 25,
     shortBreak: 5,
@@ -683,57 +684,81 @@ const myTimer = new (0, _timer.Timer)({
 myTimer.onTick = (time)=>{
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
-    timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    timeDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 };
 myTimer.onFinish = ()=>{
-    alert('Session finished!');
-    pauseBtn.classList.add('hidden');
-    startBtn.classList.remove('hidden');
+    alert("Session finished!");
+    pauseBtn.classList.add("hidden");
+    startBtn.classList.remove("hidden");
 };
-startBtn.addEventListener('click', ()=>{
+startBtn.addEventListener("click", ()=>{
     myTimer.start();
+    startBtn.classList.add("hidden");
+    pauseBtn.classList.remove("hidden");
 });
-pauseBtn.addEventListener('click', ()=>{
+pauseBtn.addEventListener("click", ()=>{
     myTimer.pause();
+    pauseBtn.classList.add("hidden");
+    startBtn.classList.remove("hidden");
 });
-resetBtn.addEventListener('click', ()=>{
+resetBtn.addEventListener("click", ()=>{
     myTimer.reset();
+    pauseBtn.classList.add("hidden");
+    startBtn.classList.remove("hidden");
 });
-pomodoroBtn.addEventListener('click', ()=>{
-    myTimer.reset();
+pomodoroBtn.addEventListener("click", ()=>{
+    myTimer.startPomodoro();
     updateActiveButton(pomodoroBtn);
 });
-shortBreakBtn.addEventListener('click', ()=>{
+shortBreakBtn.addEventListener("click", ()=>{
     myTimer.startShortBreak();
     updateActiveButton(shortBreakBtn);
 });
-longBreakBtn.addEventListener('click', ()=>{
+longBreakBtn.addEventListener("click", ()=>{
     myTimer.startLongBreak();
     updateActiveButton(longBreakBtn);
 });
 function updateActiveButton(clickedButton) {
-    let buttonsList = document.querySelectorAll('.mode-button');
-    buttonsList.forEach((btn)=>btn.classList.remove('active'));
-    clickedButton.classList.add('active');
+    modeButtons.forEach((btn)=>btn.classList.remove("active"));
+    clickedButton.classList.add("active");
 }
+myTimer.onTick(1500);
 
 },{"./Timer":"41Y8o"}],"41Y8o":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Timer", ()=>Timer);
-var _timerStates = require("./TimerStates");
+var _timerMode = require("./TimerMode");
+var _timerStatus = require("./TimerStatus");
 class Timer {
     constructor(settings){
         this.settings = settings;
-        this.currentState = (0, _timerStates.TimerStates).Stopped;
+        this.mode = (0, _timerMode.TimerMode).Pomodoro;
+        this.status = (0, _timerStatus.TimerStatus).Stopped;
         this.timerId = null;
-        this.timeRemaining = this.settings.pomodoro * 60;
         this.onTick = ()=>{};
         this.onFinish = ()=>{};
+        this.durationMap = new Map([
+            [
+                (0, _timerMode.TimerMode).Pomodoro,
+                this.settings.pomodoro
+            ],
+            [
+                (0, _timerMode.TimerMode).ShortBreak,
+                this.settings.shortBreak
+            ],
+            [
+                (0, _timerMode.TimerMode).LongBreak,
+                this.settings.longBreak
+            ]
+        ]);
+        // Set the initial time based on the default mode
+        this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
     }
+    // --- Control Methods ---
     start() {
-        if (this.timerId !== null) return;
-        this.currentState = (0, _timerStates.TimerStates).Running;
+        if (this.status === (0, _timerStatus.TimerStatus).Running) return;
+        this.status = (0, _timerStatus.TimerStatus).Running;
         this.timerId = window.setInterval(()=>{
             this.timeRemaining--;
             this.onTick(this.timeRemaining);
@@ -745,49 +770,42 @@ class Timer {
     }
     pause() {
         if (this.timerId !== null) {
-            /* here, we have created a type guard for this
-      clear interval function as it was complaining
-      that the type didn't match
-      (because what if the timerId was null?)
-      so we fixed that by wrapping it with a safe gaurd!)
-      */ clearInterval(this.timerId);
-            this.currentState = (0, _timerStates.TimerStates).Paused;
+            clearInterval(this.timerId);
             this.timerId = null;
         }
+        this.status = (0, _timerStatus.TimerStatus).Paused;
     }
     reset() {
         this.pause();
-        this.currentState = (0, _timerStates.TimerStates).Stopped;
-        this.timeRemaining = this.settings.pomodoro * 60;
+        this.status = (0, _timerStatus.TimerStatus).Stopped;
+        const durationInMinutes = this.durationMap.get(this.mode) ?? 0;
+        this.timeRemaining = durationInMinutes * 60;
+        this.onTick(this.timeRemaining);
+    }
+    startPomodoro() {
+        this.pause();
+        this.mode = (0, _timerMode.TimerMode).Pomodoro;
+        this.status = (0, _timerStatus.TimerStatus).Stopped;
+        this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
         this.onTick(this.timeRemaining);
     }
     startShortBreak() {
         this.pause();
-        this.currentState = (0, _timerStates.TimerStates).Break;
-        this.timeRemaining = this.settings.shortBreak * 60;
+        this.mode = (0, _timerMode.TimerMode).ShortBreak;
+        this.status = (0, _timerStatus.TimerStatus).Stopped;
+        this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
         this.onTick(this.timeRemaining);
     }
     startLongBreak() {
         this.pause();
-        this.currentState = (0, _timerStates.TimerStates).Break;
-        this.timeRemaining = this.settings.longBreak * 60;
+        this.mode = (0, _timerMode.TimerMode).LongBreak;
+        this.status = (0, _timerStatus.TimerStatus).Stopped;
+        this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
         this.onTick(this.timeRemaining);
     }
 }
 
-},{"./TimerStates":"7msDj","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"7msDj":[function(require,module,exports,__globalThis) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "TimerStates", ()=>TimerStates);
-var TimerStates = /*#__PURE__*/ function(TimerStates) {
-    TimerStates[TimerStates["Stopped"] = 0] = "Stopped";
-    TimerStates[TimerStates["Paused"] = 1] = "Paused";
-    TimerStates[TimerStates["Running"] = 2] = "Running";
-    TimerStates[TimerStates["Break"] = 3] = "Break";
-    return TimerStates;
-}({});
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"jnFvT":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","./TimerMode":"2lM9B","./TimerStatus":"gIhJF"}],"jnFvT":[function(require,module,exports,__globalThis) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -817,6 +835,28 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}]},["8i0ds","1QViH"], "1QViH", "parcelRequire1a4f", {})
+},{}],"2lM9B":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "TimerMode", ()=>TimerMode);
+var TimerMode = /*#__PURE__*/ function(TimerMode) {
+    TimerMode[TimerMode["Pomodoro"] = 0] = "Pomodoro";
+    TimerMode[TimerMode["ShortBreak"] = 1] = "ShortBreak";
+    TimerMode[TimerMode["LongBreak"] = 2] = "LongBreak";
+    return TimerMode;
+}({});
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"gIhJF":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "TimerStatus", ()=>TimerStatus);
+var TimerStatus = /*#__PURE__*/ function(TimerStatus) {
+    TimerStatus[TimerStatus["Running"] = 0] = "Running";
+    TimerStatus[TimerStatus["Paused"] = 1] = "Paused";
+    TimerStatus[TimerStatus["Stopped"] = 2] = "Stopped";
+    return TimerStatus;
+}({});
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["8i0ds","1QViH"], "1QViH", "parcelRequire1a4f", {})
 
 //# sourceMappingURL=ts-pomodoro.7a14eeb4.js.map
