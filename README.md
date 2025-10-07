@@ -11,30 +11,6 @@ A configurable Pomodoro timer built with vanilla HTML, CSS, and modern TypeScrip
 -   Timer durations are fully configurable through a settings object.
 -   Clean, modern, and responsive user interface.
 
-## Getting Started
-
-To run this project locally, you will need to have TypeScript installed.
-
-1.  **Clone the repository:**
-    ```bash
-    git clone [your-repository-url]
-    ```
-2.  **Navigate to the project directory:**
-    ```bash
-    cd [your-project-directory]
-    ```
-3.  **Install TypeScript (if you haven't already):**
-    ```bash
-    npm install -g typescript
-    ```
-4.  **Compile the TypeScript code in watch mode:**
-    This command will automatically re-compile your `.ts` files into JavaScript whenever you save a change.
-    ```bash
-    tsc --watch
-    ```
-5.  **Open the application:**
-    Open the `index.html` file in your web browser.
-
 ## Architecture & Design Decisions
 
 This project was built with a strong emphasis on a clean, decoupled architecture. The application logic is completely separated from the user interface, making the code more modular, reusable, and easier to maintain.
