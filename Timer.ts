@@ -28,7 +28,6 @@ export class Timer {
       [TimerMode.LongBreak, this.settings.longBreak],
     ]);
 
-    // Set the initial time based on the default mode
     this.timeRemaining = (this.durationMap.get(this.mode) ?? 0) * 60;
   }
 
